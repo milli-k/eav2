@@ -1,8 +1,6 @@
 from omni_python_sdk import OmniAPI
 from yaml import safe_load as yaml_load, dump as yaml_dump
-import pyarrow
-from dotenv import load_dotenv
-load_dotenv()
+import pyarrow # only imported for type hinting
 
 
 # Define your query which pulls the unique keys and data types
