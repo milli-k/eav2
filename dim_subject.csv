@@ -1,0 +1,11 @@
+subject_id,subject_type,customer_id,dim_bonafide,dim_subject,subject_name
+HO-12345,HOTEL,ABC,"Customer: Marriott;
+Vertical: Travel > Hospitatlity;
+","Property: Marriot > Aloft > Aloft Dallas; Market: North America > Texas > Dallas; 
+Property Type: Full Service; 
+Location: North America > US > Texas > Dallas > ",Aloft Dallas
+DMO-12345,Destination,DEF,"Customer: Bloomington, MN;",Location: North America > US > MN > Bloomington,"Bloomington, MN"
+DMO-12345,Destination,GHI,Location: NA > US > MN > Bloomington ,Location: North America > US > MN > Bloomington > Mall of America,Mall of America
+DMO-123456 ,Mall of America,JKL,Location: NA > US > MN > Bloomington ,"Type: Attraction > Shopping and Retail 
+Location: Bloomington MN > 1 Mall of America Drive ;
+",

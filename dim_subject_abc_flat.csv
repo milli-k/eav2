@@ -1,0 +1,6 @@
+subject_id,subject_type,customer_id,dim_bonafide,dim_subject,Property,Sub property 1,Sub property 2,Market Contenent,Market State,Market City,Property Type,Location Continent,Location Country,Location State,Location City,subject_name
+HO-12345,HOTEL,ABC,"Customer: Marriott;
+Vertical: Travel > Hospitatlity;
+","Property: Marriot > Aloft > Aloft Dallas; Market: North America > Texas > Dallas; 
+Property Type: Full Service; 
+Location: North America > US > Texas > Dallas > ",Marriot,Aloft,Aloft Dallas,North America,Texas,Dallas,Full Service,North America,US,Texas,Dallas,Aloft Dallas
