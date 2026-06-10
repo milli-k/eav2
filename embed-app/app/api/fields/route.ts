@@ -1,17 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getTenant } from "@/lib/tenants";
 import { getDashboardPicker } from "@/lib/omni";
+import { getSession } from "@/lib/session";
 
-// GET /api/fields?customerId=ABC -> { pickerId, fields: [{value,label}] }
-export async function GET(req: NextRequest) {
-  const customerId = req.nextUrl.searchParams.get("customerId");
-  if (!customerId) {
-    return NextResponse.json({ error: "customerId is required" }, { status: 400 });
+// GET /api/fields -> { pickerId, fields } for the signed-in user's tenant.
+export async function GET() {
+  const session = getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
-  const tenant = getTenant(customerId);
+  const tenant = getTenant(session.customerId);
   if (!tenant) {
     return NextResponse.json(
-      { error: `Unknown tenant '${customerId}'` },
+      { error: `No dashboard configured for '${session.customerId}'` },
       { status: 404 }
     );
   }
@@ -19,9 +20,6 @@ export async function GET(req: NextRequest) {
     const picker = await getDashboardPicker(tenant.dashboardId);
     return NextResponse.json(picker);
   } catch (err) {
-    return NextResponse.json(
-      { error: (err as Error).message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }

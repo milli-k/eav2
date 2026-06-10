@@ -18,6 +18,8 @@ export type SignedEmbed = {
 export async function signTenantDashboard(opts: {
   dashboardId: string;
   customerId: string;
+  email: string;
+  name?: string;
 }): Promise<SignedEmbed> {
   const host = process.env.OMNI_EMBED_HOST;
   const secret = process.env.OMNI_EMBED_SECRET;
@@ -28,9 +30,11 @@ export async function signTenantDashboard(opts: {
     contentId: opts.dashboardId,
     secret,
     host, // bare hostname — no protocol, no port
-    externalId: process.env.OMNI_EMBED_USER_EMAIL || "embed-demo@example.com",
-    name: process.env.OMNI_EMBED_USER_NAME || "Embed Demo User",
-    userAttributes: { customer_id: [opts.customerId] },
+    externalId: opts.email,
+    name: opts.name || opts.email,
+    // customer_id is defined as a scalar string user attribute in Omni, so it
+    // must be passed as a string (not a ["ABC"] list, which Omni rejects).
+    userAttributes: { customer_id: opts.customerId },
     mode: EmbedSessionMode.SingleContent,
     prefersDark: "false",
   });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type PickerField = { value: string; label: string };
 
@@ -10,8 +11,13 @@ function fieldPickerParam(pickerId: string, selected: string[]): string {
   return `f--${pickerId}=${JSON.stringify({ values: selected })}`;
 }
 
-export default function FieldPickerEmbed({ tenants }: { tenants: string[] }) {
-  const [customerId, setCustomerId] = useState(tenants[0] ?? "");
+export default function FieldPickerEmbed({
+  email,
+  customerId,
+}: {
+  email: string;
+  customerId: string;
+}) {
   const [embedUrl, setEmbedUrl] = useState<string>("");
   const [embedOrigin, setEmbedOrigin] = useState<string>("");
   const [pickerId, setPickerId] = useState<string>("");
@@ -19,9 +25,9 @@ export default function FieldPickerEmbed({ tenants }: { tenants: string[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [status, setStatus] = useState<string>("Loading…");
   const [error, setError] = useState<string>("");
+  const router = useRouter();
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  // Refs let the message handler / push read current values without re-binding.
   const selectedRef = useRef(selected);
   const pickerIdRef = useRef(pickerId);
   const originRef = useRef(embedOrigin);
@@ -47,23 +53,12 @@ export default function FieldPickerEmbed({ tenants }: { tenants: string[] }) {
     );
   }, []);
 
-  // Load embed URL + field list whenever the selected tenant changes.
+  // Load embed URL + field list once (tenant is fixed by the session).
   useEffect(() => {
-    if (!customerId) return;
     let cancelled = false;
-    setStatus("Loading…");
-    setError("");
-    setEmbedUrl("");
-    setFields([]);
-    setSelected(new Set());
-
     Promise.all([
-      fetch(`/api/embed?customerId=${encodeURIComponent(customerId)}`).then((r) =>
-        r.json()
-      ),
-      fetch(`/api/fields?customerId=${encodeURIComponent(customerId)}`).then((r) =>
-        r.json()
-      ),
+      fetch("/api/embed").then((r) => r.json()),
+      fetch("/api/fields").then((r) => r.json()),
     ])
       .then(([embed, picker]) => {
         if (cancelled) return;
@@ -73,18 +68,16 @@ export default function FieldPickerEmbed({ tenants }: { tenants: string[] }) {
         setEmbedOrigin(embed.origin);
         setPickerId(picker.pickerId);
         setFields(picker.fields);
-        // Default: everything checked, matching the dashboard's full field set.
         setSelected(new Set(picker.fields.map((f: PickerField) => f.value)));
         setStatus("Loading dashboard…");
       })
       .catch((e) => {
         if (!cancelled) setError(e.message || String(e));
       });
-
     return () => {
       cancelled = true;
     };
-  }, [customerId]);
+  }, []);
 
   // Listen for events coming out of the embedded dashboard.
   useEffect(() => {
@@ -93,12 +86,9 @@ export default function FieldPickerEmbed({ tenants }: { tenants: string[] }) {
       switch (event.data.name) {
         case "dashboard:loaded":
           setStatus("Ready");
-          // Push the initial selection once the dashboard is interactive.
           pushSelection();
           break;
         case "dashboard:filters":
-          // Echoes the real filter state — handy for confirming the exact
-          // FIELD_PICKER value shape. Inspect in the browser console.
           // eslint-disable-next-line no-console
           console.log("[omni] dashboard:filters", event.data.payload);
           break;
@@ -119,13 +109,18 @@ export default function FieldPickerEmbed({ tenants }: { tenants: string[] }) {
       else next.add(value);
       return next;
     });
-    // Push on the next tick so selectedRef reflects the update.
     setTimeout(pushSelection, 0);
+  }
+
+  async function logout() {
+    await fetch("/api/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
   }
 
   return (
     <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-      {/* Sidebar: tenant switcher + custom field picker */}
+      {/* Sidebar: signed-in user + custom field picker */}
       <aside
         style={{
           width: 280,
@@ -133,30 +128,36 @@ export default function FieldPickerEmbed({ tenants }: { tenants: string[] }) {
           background: "#fff",
           padding: 16,
           overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        <label style={{ fontSize: 12, fontWeight: 600, color: "#374151" }}>
-          Customer
-        </label>
-        <select
-          value={customerId}
-          onChange={(e) => setCustomerId(e.target.value)}
+        <div
           style={{
-            display: "block",
-            width: "100%",
-            marginTop: 6,
-            marginBottom: 18,
-            padding: "6px 8px",
-            border: "1px solid #d1d5db",
-            borderRadius: 6,
+            paddingBottom: 14,
+            marginBottom: 14,
+            borderBottom: "1px solid #f3f4f6",
           }}
         >
-          {tenants.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>{email}</div>
+          <div style={{ fontSize: 12, color: "#6b7280", marginTop: 2 }}>
+            Customer: {customerId}
+          </div>
+          <button
+            onClick={logout}
+            style={{
+              marginTop: 10,
+              fontSize: 12,
+              padding: "4px 10px",
+              border: "1px solid #d1d5db",
+              borderRadius: 6,
+              background: "#fff",
+              cursor: "pointer",
+            }}
+          >
+            Sign out
+          </button>
+        </div>
 
         <div style={{ fontSize: 12, fontWeight: 600, color: "#374151", marginBottom: 8 }}>
           Custom fields
@@ -185,9 +186,7 @@ export default function FieldPickerEmbed({ tenants }: { tenants: string[] }) {
           ))}
         </div>
 
-        <div style={{ marginTop: 18, fontSize: 11, color: "#9ca3af" }}>
-          {status}
-        </div>
+        <div style={{ marginTop: 18, fontSize: 11, color: "#9ca3af" }}>{status}</div>
       </aside>
 
       {/* Embedded Omni dashboard */}
