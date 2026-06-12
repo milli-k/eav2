@@ -102,7 +102,7 @@ FIELD_ALIASES = {
 Only alias fields that truly share the same data — merging fields with different paths produces nodes that don't resolve at query time.
 
 ## Relevant Omni docs
-
+- [Embedding Custom Fields](https://community.omni.co/t/embedding-custom-fields-eav-key-value-json-custom-fields-per-customer/339)
 - [Embed overview](https://docs.omni.co/docs/embed/overview)
 - [SSO embed URL signing](https://docs.omni.co/docs/embed/sso-embed)
 - [Model extensions](https://docs.omni.co/docs/modeling/model-extensions)
